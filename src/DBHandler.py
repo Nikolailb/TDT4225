@@ -54,14 +54,19 @@ class DBHandler:
         self.tables.append("track_point")
         self.db_connection.commit()
         
-    # TODO: Rename / design for SELECT vs INSERT and UPDATE
-    def execute_query(self, query, data):
+    def execute_insert(self, query, data):
         self.cursor.execute(query, data)
         self.db_connection.commit()
-        
-    def execute_bulk_query(self, query, data):
+        return self.cursor._last_insert_id
+    
+    def execute_bulk_insert(self, query, data):
         self.cursor.executemany(query, data)
         self.db_connection.commit()
+        
+    def execute_select(self, query, data=()):
+        self.cursor.execute(query, data)
+        self.db_connection.commit()
+        return self.cursor.fetchall()
         
     def show_tables(self):
         self.cursor.execute("SHOW TABLES")
@@ -72,10 +77,12 @@ class DBHandler:
         print("Dropping table %s..." % table_name)
         query = "DROP TABLE %s"
         self.cursor.execute(query % table_name)
+        self.db_connection.commit()
         
     def drop_all_tables(self):
         for i in reversed(range(len(self.tables))):
             self.drop_table(self.tables[i])
+        self.tables = []
             
     def get_table_length(self, table_name):
         if table_name not in self.tables:
@@ -90,12 +97,13 @@ def main():
     try:
         program = DBHandler()
         program.create_tables()
-        # Check that the table is dropped
-        program.execute_query("INSERT INTO user (id, has_labels) VALUES (%s, %s)", ('Todd', 0))
-        program.show_tables()
-        print(program.get_table_length("user"))
         program.drop_all_tables()
+        program.create_tables()
         program.show_tables()
+        t = program.execute_query("INSERT INTO user (id, has_labels) VALUES (%s, %s)", ('Todd', 0))
+        # t = program.execute_query("SELECT * FROM user")
+        program.show_tables()
+        program.drop_all_tables()
     except Exception as e:
         print("ERROR: Failed to use database:", e)
     finally:

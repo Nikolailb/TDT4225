@@ -54,16 +54,20 @@ class DBHandler:
         self.tables.append("track_point")
         self.db_connection.commit()
         
-    def execute_insert(self, query, data):
+    def execute_insert(self, query: str, data):
+        if "INSERT" not in query.upper():
+            return
         self.cursor.execute(query, data)
         self.db_connection.commit()
         return self.cursor._last_insert_id
     
-    def execute_bulk_insert(self, query, data):
+    def execute_bulk_insert(self, query: str, data):
         self.cursor.executemany(query, data)
         self.db_connection.commit()
         
-    def execute_select(self, query, data=()):
+    def execute_select(self, query: str, data=()):
+        if "SELECT" not in query.upper():
+            return
         self.cursor.execute(query, data)
         self.db_connection.commit()
         return self.cursor.fetchall()

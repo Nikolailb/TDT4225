@@ -3,9 +3,9 @@ import os
 
 class DataHandler:
     def __init__(self) -> None:
-        self.users = []
-        self.activities = []
-        self.track_points = []
+        self.users = {}
+        self.activities = {}
+        self.track_points = {}
         
     def read_data(self):
         print("Starting to read data, this might take a while...")
@@ -18,16 +18,17 @@ class DataHandler:
                 labeled = int(next_labeled_id == obj.name)
                 if labeled:
                     next_labeled_id = labeled_ids.pop(0) if len(labeled_ids) > 0 else -1
-                self.users.append({"id": obj.name, "data": (labeled)})
+                self.users[obj.name] = [labeled]
         print(f"Total users: {len(self.users)}")
         
-        for user in self.users:
+        act_temp_id = 20000
+        for user, labeled in self.users.items():
             labels = []
-            if user["data"]:
-                with open(os.path.join("resources/dataset/Data", user["id"], "labels.txt")) as file:
+            if labeled[0]:
+                with open(os.path.join("resources/dataset/Data", user, "labels.txt")) as file:
                     file.readline()
                     labels = [[i.strip().replace("/", "-") for i in line.split("\t")] for line in file]
-            for obj in os.scandir(os.path.join("resources/dataset/Data", user["id"], "Trajectory")):
+            for obj in os.scandir(os.path.join("resources/dataset/Data", user, "Trajectory")):
                 if obj.is_file():
                     with open(obj.path) as file:
                         lines = file.readlines()
@@ -38,21 +39,37 @@ class DataHandler:
                         data = None
                         for start, end, label in labels:
                             if start == start_date and end == end_date:
-                                data = (user["id"], label, start_date, end_date)
+                                data = [user, label, start_date, end_date]
                                 break
                         if data is None:
-                            data = (user["id"], None, start_date, end_date)
-                        self.activities.append({"id": obj.name, "data": data})
+                            data = [user, None, start_date, end_date]
+                        self.activities[act_temp_id] = data
+                        act_temp_id += 1
                         for i in range(6, len(lines)):
                             lat, lon, _, altitude, data_days, data_date, data_time = [l.strip() for l in lines[i].split(",")]
-                            self.track_points.append({"id": obj.name, "data": (float(lat), float(lon), int(math.floor(float(altitude))), float(data_days), f"{data_date} {data_time}")})
+                            if act_temp_id not in self.track_points:
+                                self.track_points[act_temp_id] = []
+                            self.track_points[act_temp_id].append([float(lat), float(lon), int(math.floor(float(altitude))), float(data_days), f"{data_date} {data_time}"])
         print(f"Total activities: {len(self.activities)}")
-        print(f"Total trackpoints: {len(self.track_points)}")
+        print(f"Total trackpoints: {sum([len(val) for val in self.track_points.values()])}")
+      
+    def update_activity_id(self, old_id, new_id):
+        if new_id == old_id:
+            return
+        if new_id in self.activities:
+            print("Key crash!")
+            self.update_activity_id(new_id, max(self.activities.keys()) + 1)
+        self.activities[new_id] = self.activities.pop(old_id)
+        self.track_points[new_id] = [track_point for track_point in self.track_points.pop(old_id)]
         
-        def get_user_data(self):
-            user_data = [(user["id"])]
-            for user in self.users:
-                pass
+    def get_user_data(self):
+        return [[user] + data for user, data in self.users.items()]
+    
+    def get_activity_data(self):
+        return [activity for activity in self.activities.values()]
+    
+    def get_track_point_data(self):
+        return [(activity_id, data) for activity_id, data in self.track_points.items()]
                 
 
 def main():
@@ -63,4 +80,4 @@ def main2():
     obj.read_data()
     
 if __name__ == "__main__":
-    main()
+    main2()

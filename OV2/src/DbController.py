@@ -107,3 +107,10 @@ class DbController:
         with self.engine.begin() as connection:
             return connection.execute(query)
     
+    def drop_table(self, table):
+        with self.engine.begin() as connection:
+            return connection.execute(f"DROP TABLE IF EXISTS {table}")
+    
+    def drop_all_tables(self):
+        for table in self.tables:
+            self.drop_table(table)

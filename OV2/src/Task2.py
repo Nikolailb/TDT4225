@@ -112,7 +112,7 @@ class Task2:
         print(f"User '112' walked {res:.3f}km in 2008")
         
     def question_8(self):
-        print("This might take a while...")
+        print("This might take a while...", end="\r")
         feet_to_meter = 0.3048
         t = self.db_controller.select_dataframe(
             f"""
@@ -132,7 +132,7 @@ class Task2:
         
     
     def question_9(self):
-        print("This might take a while...")
+        print("This might take a while...", end="\r")
         invalid = self.db_controller.select_dataframe(
             """
             SELECT p.user_id, COUNT(DISTINCT p.activity_id) AS invalid_activities

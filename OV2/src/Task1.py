@@ -1,4 +1,3 @@
-
 from DataHandler import DataLoader
 from DbController import DbController
 
@@ -33,7 +32,7 @@ class Task1:
             print("-" * 75)
             print(repr(e))
             print("Something went wrong, please try again!")
-            self.db_handler.drop_all_tables()       
+            self.db_controller.drop_all_tables()       
         
     def _insert_users(self):
         print(f"Inserting users...", end="\r")

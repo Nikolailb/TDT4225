@@ -40,13 +40,15 @@ class DbController:
         collection = self.db[collection_name]
         collection.insert_many(dataframe.to_dict("records"))
     
-    def select_dataframe(self, collection_name: str, query, keep_id=False, parse_dates=None):
+    def select_dataframe(self, collection_name: str, query):
         collection = self.db[collection_name]
         cursor = collection.aggregate(query)
         df = pd.DataFrame.from_records(list(cursor))
-        if not keep_id and "_id" in df.columns.to_list():
-            df.drop(columns=["_id"], inplace=True)
         return df
+    
+    def insert_many(self, collection_name, data):
+        collection = self.db[collection_name]
+        collection.insert_many(data)
     
     def get_distinct(self, collection_name, feature_name):
         collection = self.db[collection_name]

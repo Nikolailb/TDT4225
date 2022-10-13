@@ -6,7 +6,7 @@ Otherwise I used the resources folder to store copies of the cleaned data as CSV
 All code is in the [src](src/) folder:
 - [DbConnector.py](src/DbConnector.py) and [example.py](src/example.py) are leftovers from skeleton code. Left them in since they are nice to have for testing if the MongoDB db is running as it should.
 - [DataHandler.py](src/DataHandler.py): Reads the data and converts it into pandas dataframes after cleaning.
-- [DbController.py](src/DbController.py): Connects to the DB using sqlalchemy and handles all further queries. This includes creation of tables and insertion.
+- [DbController.py](src/DbController.py): Connects to the DB and handles all further queries. This includes creation of tables and insertion.
 - [Task1.py](src/Task1.py): The code for completing task 1. Mostly uses a combination of [DataHandler.py](src/DataHandler.py) and [DbController.py](src/DbController.py) to insert data into database.
 - [Task2.py](src/Task2.py): Runs the queries specified in Task2. Uses an instance of [DbController.py](src/DbController.py) to run the queries.
 

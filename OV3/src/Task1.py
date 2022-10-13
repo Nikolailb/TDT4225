@@ -44,6 +44,9 @@ def main():
         task = Task1()
         task.load_data(read_from_file=True)
         task.insert_data()
+    except Exception as e:
+        print("Something went wrong!")
+        print(e)
     finally:
         if task:
             task.db_controller.close_connection()

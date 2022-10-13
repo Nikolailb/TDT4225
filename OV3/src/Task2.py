@@ -1,8 +1,10 @@
 from pprint import pprint
+from site import USER_SITE
 from tabulate import tabulate
 from haversine import haversine
 from DbController import DbController
 import pandas as pd
+import numpy as np
 
 class Task2:
     def __init__(self) -> None:
@@ -218,84 +220,85 @@ class Task2:
         print(f"User \"112\" walked a total of {res:.3f}km in 2008")
 
     def question_8(self):
-        # act_track = self.db_controller.select_dataframe("activity", 
-        # [{
-        #     '$lookup': {
-        #         'from': 'track_point', 
-        #         'localField': '_id', 
-        #         'foreignField': 'activity_id', 
-        #         'as': 'act_track'
-        #     }
-        # }, {
-        #     '$unwind': '$act_track'
-        # }, {
-        #     '$project': {
-        #         'user_id': '$user_id', 
-        #         'activity_id': '$_id', 
-        #         'date_time': '$act_track.date_time', 
-        #         'altitude': '$act_track.altitude'
-        #     }
-        # }])
         
+        feet_to_meter = 0.3048
         
-        # print(act_track.dtypes)
-        # act_track["date_time"] = pd.to_datetime(act_track["date_time"], format="%Y-%m-%d %H:%M:%S")
-        # res = []
-        # for user in act_track["user_id"].unique():
-        #     altitude_gained = 0
-        #     tracks = act_track[(act_track["user_id"] == user) & (act_track["altitude"] >= 0)]["altitude"].sort_values(by=["activity_id", "date_time"]).to_numpy()
-        #     for i in range(tracks.shape[0] - 1):
-        #         if tracks[i] < tracks[i + 1]:
-        #             altitude_gained += tracks[i + 1] - tracks[i]
-        #     res.append(pd.Series([user, altitude_gained], index=["user_id", "altitude_gained"]))
-        # res = pd.DataFrame(res).sort_values(by=["altitude_gained"], ascending=False)
-        # print(tabulate(res, headers="keys", tablefmt="psql", showindex=False))
+        print("Fetching activities...", end="\r")
+        activities = self.db_controller.select_dataframe("activity", 
+        [{
+            '$project': {
+                '_id': '$_id',
+                'user_id': '$user_id'
+            }
+        }], keep_id=True)
+        print("Fetching activities... Done!")
+        print("Fetching track points...", end="\r")
+        track_points = self.db_controller.select_dataframe("track_point", 
+        [{
+            '$match': {
+                'altitude': {
+                    '$gte': 0
+                }
+            }
+        }, {
+            '$project': {
+                'activity_id': '$activity_id',
+                'altitude': '$altitude',
+                'date_time': '$date_time'
+            }
+        }])
+        print("Fetching track points... Done!")
         
-        users = list(self.db_controller.get_distinct("user", "_id"))
+        act_track = track_points.merge(activities, how="left", left_on="activity_id", right_on="_id").sort_values(by=["activity_id", "date_time"])
         res = []
+        print("Calculating altitude gained per user:")
+        users = act_track["user_id"].unique()
         for j, user in enumerate(users):
-            print(f"Currently doing user: {user}. {j+1}/{len(users)}                                                      ", end="\r")
+            print(f"Currently on user {j + 1}/{users.shape[0]}", end="\r")
             altitude_gained = 0
-            user_activity = self.db_controller.select_dataframe("activity",
-            [{
-                '$match': {
-                    'user_id': {
-                        '$eq': user
-                    }
-                }
-            }, {
-                '$lookup': {
-                    'from': 'track_point', 
-                    'localField': '_id', 
-                    'foreignField': 'activity_id', 
-                    'as': 'act_track'
-                }
-            }, {
-                '$unwind': '$act_track'
-            }, {
-                '$project': {
-                    'activity_id': '$_id', 
-                    'date_time': '$act_track.date_time', 
-                    'altitude': '$act_track.altitude'
-                }
-            }, {
-                '$match': {
-                    'altitude': {
-                        '$gte': 0
-                    }
-                }    
-            }]).sort_values(by=["activity_id", "date_time"])["altitude"].to_numpy()
-            print(f"Currently doing user: {user}. {j+1}/{len(users)}. Finished fetching data, starting calculation...", end="\r")
-            for i in range(user_activity.shape[0] - 1):
-                altitude_gained += max(user_activity[i + 1] - user_activity[i], 0)
+            user_tracks = act_track[act_track['user_id'] == user]["altitude"].to_numpy()
+            for i in range(user_tracks.shape[0] - 1):
+                altitude_gained += max(user_tracks[i + 1] - user_tracks[i], 0)
             res.append(pd.Series([user, altitude_gained], index=["user_id", "altitude_gained"]))
-        res = pd.DataFrame(res).sort_values(by=["altitude_gained"])
-        print(tabulate(res, headers="keys", tablefmt="psql", showindex=False))
+        res = pd.DataFrame(res).sort_values(by=["altitude_gained"], ascending=False)
+        res["altitude_gained"] = res['altitude_gained'] * feet_to_meter
+        print()
+        print(tabulate(res[:20], headers="keys", tablefmt="psql", showindex=False))
         
             
 
     def question_9(self):
-        pass
+        print("Fetching activities...", end="\r")
+        activities = self.db_controller.select_dataframe("activity", 
+        [{
+            '$project': {
+                '_id': '$_id',
+                'user_id': '$user_id'
+            }
+        }], keep_id=True)
+        print("Fetching activities... Done!")
+        print("Fetching track points...", end="\r")
+        track_points = self.db_controller.select_dataframe("track_point", 
+        [{
+            '$project': {
+                'activity_id': '$activity_id',
+                'date_time': '$date_time'
+            }
+        }])
+        print("Fetching track points... Done!")
+        act_track = track_points.merge(activities, how="left", left_on="activity_id", right_on="_id").sort_values(by=["activity_id", "date_time"])
+        users = act_track["user_id"].unique()
+        res = []
+        for j, user in enumerate(users):
+            print(f"Currently on user {j + 1}/{users.shape[0]}", end="\r")
+            invalid_activities = 0
+            user_tracks = act_track[act_track['user_id'] == user]["date_time"].to_numpy()
+            for i in range(user_tracks.shape[0] - 1):
+                invalid_activities += int(((user_tracks[i + 1] - user_tracks[i]) / np.timedelta64(1, "s")) >= 300)
+            res.append(pd.Series([user, invalid_activities], index=["user_id", "invalid_activities"]))
+        res = pd.DataFrame(res).sort_values(by=["invalid_activities"], ascending=False)
+        print()
+        print(tabulate(res, headers="keys", tablefmt="psql", showindex=False))
 
     def question_10(self):
         pass
@@ -308,15 +311,12 @@ class Task2:
 def main():
     try:
         task = Task2()
-        # task.question_8()
-        
-        t1 = task.db_controller.select_dataframe()
-        
+        task.question_9()
         # for index, question in enumerate(task.questions):
         #     print(f"\nQuestion {index + 1}")
         #     question()
         #     if index < len(task.questions) - 1: input("\nPress enter to recieve the next question:")
-    except Exception() as e:
+    except Exception as e:
         print("Something went wrong!")
         print(e)
     finally:

@@ -4,13 +4,13 @@
 The dataset is located in the resources folder: [dataset](resources/dataset/)
 Otherwise I used the resources folder to store copies of the cleaned data as CSV files for faster reads when testing inserts.
 All code is in the [src](src/) folder:
-- [DbConnector.py](src/DbConnector.py) and [example.py](src/example.py) are leftovers from skeleton code. Left them in since they are nice to have for testing if the MySQL db is running as it should.
+- [DbConnector.py](src/DbConnector.py) and [example.py](src/example.py) are leftovers from skeleton code. Left them in since they are nice to have for testing if the MongoDB db is running as it should.
 - [DataHandler.py](src/DataHandler.py): Reads the data and converts it into pandas dataframes after cleaning.
 - [DbController.py](src/DbController.py): Connects to the DB using sqlalchemy and handles all further queries. This includes creation of tables and insertion.
 - [Task1.py](src/Task1.py): The code for completing task 1. Mostly uses a combination of [DataHandler.py](src/DataHandler.py) and [DbController.py](src/DbController.py) to insert data into database.
 - [Task2.py](src/Task2.py): Runs the queries specified in Task2. Uses an instance of [DbController.py](src/DbController.py) to run the queries.
 
-## How to run the MySQL database
+## How to run the MongoDB database
 Have been tested on Windows 11 and Kali linux
 1. Install docker
 2. Open a terminal in the project root folder (TDT4225)
@@ -27,4 +27,4 @@ Have been tested on Windows 11 and Kali linux
 - To view all your containers you can run `docker container la -a` which will list both stopped and started containers.
 - To stop a container simply run `docker stop {id}` where the id is the `CONTAINER ID` column from the previous command
 - Start and remove is the same as stop just with `start` or `rm` instead of `stop`
-- There is similar commands for the image you created with `docker build -t mysql_db .`. E.g. `docker image ls`
+- There is similar commands for the image you created with `docker build -t mongodb .`. E.g. `docker image ls`

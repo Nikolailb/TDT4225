@@ -1,12 +1,10 @@
 from pprint import pprint
-from site import USER_SITE
 from time import time
 import traceback
 from tabulate import tabulate
 from haversine import haversine
 from DbController import DbController
 import pandas as pd
-import numpy as np
 
 class Task2:
     def __init__(self) -> None:
@@ -51,7 +49,7 @@ class Task2:
         print(f"Number of users: {user_count['users']}")
         print(f"Number of activities: {activity_and_tp_count['activities']}")
         print(f"Number of track points: {activity_and_tp_count['track_points']}")
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
     
     def question_2(self):
         start = time()
@@ -67,7 +65,7 @@ class Task2:
             }
         }])
         pprint(list(stats))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
         
 
     def question_3(self):
@@ -89,12 +87,12 @@ class Task2:
         }])))
         top_activities.index += 1
         print(tabulate(top_activities, headers="keys", tablefmt="psql"))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
         
 
     def question_4(self):
         start = time()
-        user_taken_taxi = self.db_controller.aggregate("activity", 
+        user_taken_taxi = self.db_controller.aggregate("user", 
         [{
             '$lookup': {
                 'from': 'activity', 
@@ -114,7 +112,7 @@ class Task2:
             }
         }])
         print(f"Users who have used a taxi: {[i['_id'] for i in list(user_taken_taxi)]}")
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
         
 
     def question_5(self):
@@ -138,8 +136,9 @@ class Task2:
                 'count': -1
             }
         }])
+        print("Transportation mode by count:")
         pprint(list(mode_count))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
         
 
     def question_6(self):
@@ -178,7 +177,7 @@ class Task2:
         print(f"The year with the most activities was {per_year[0]['_id']} with {per_year[0]['activity_count']} activities!")
         hour = max(per_year, key=lambda e: e["hour_count"])
         print(f"The year with the most hours was {hour['_id']} with {hour['hour_count']} hours!")
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
         
 
     def question_7(self):
@@ -223,58 +222,55 @@ class Task2:
             for i in range(t.shape[0] - 1):
                 res += haversine(t[i], t[i + 1])
         print(f"User \"112\" walked a total of {res:.3f}km in 2008")
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
 
     def question_8(self):
         start = time()
         feet_to_meter = 0.3048
         
-        print("Fetching activities...", end="\r")
-        activities = self.db_controller.select_dataframe("user", 
-        [{
-            '$lookup': {
-                'from': 'activity', 
-                'localField': 'activities', 
-                'foreignField': '_id', 
-                'as': 'activities'
-            }
-        }, {
-            '$unwind': '$activities'
-        }, {
-            '$unwind': '$activities.track_points'
-        }, {
-            '$match': {
-                'activities.track_points.altitude': {
-                    '$ne': -777
-                }
-            }
-        }, {
-            '$project': {
-                '_id': 0, 
-                'user_id': '$_id', 
-                'activity_id': '$activities._id', 
-                'altitude': '$activities.track_points.altitude', 
-                'date_time': '$activities.track_points.date_time'
-            }
-        }])
-        print("Fetching track points... Done!")
-        
-        act_track = activities.sort_values(by=["activity_id", "date_time"])
+        users = list(self.db_controller.get_distinct("user", "_id")) # Fetching users first, since it is faster to query a subset of the activities.
         res = []
-        print("Calculating altitude gained per user:")
-        users = act_track["user_id"].unique()
         for j, user in enumerate(users):
-            print(f"Currently on user {j + 1}/{users.shape[0]}", end="\r")
+            print(f"Currently on user {j + 1}/{len(users)}", end="\r")
+            user_tracks = list(self.db_controller.aggregate("user",
+            [{
+                '$match': {
+                    '_id': user
+                }
+            }, {
+                '$lookup': {
+                    'from': 'activity', 
+                    'localField': 'activities', 
+                    'foreignField': '_id', 
+                    'as': 'activities'
+                }
+            }, {
+                '$unwind': '$activities'
+            }, {
+                '$unwind': '$activities.track_points'
+            }, {
+                '$match': {
+                    'activities.track_points.altitude': {
+                        '$ne': -777
+                    }
+                }
+            }, {
+                '$project': {
+                    '_id': 0, 
+                    'activity_id': '$activities._id', 
+                    'altitude': '$activities.track_points.altitude', 
+                    'date_time': '$activities.track_points.date_time'
+                }
+            }]))
             altitude_gained = 0
-            user_tracks = act_track[act_track['user_id'] == user]["altitude"].to_numpy()
-            for i in range(user_tracks.shape[0] - 1):
-                altitude_gained += max(user_tracks[i + 1] - user_tracks[i], 0)
+            for i in range(len(user_tracks) - 1):
+                altitude_gained += max(user_tracks[i + 1]["altitude"] - user_tracks[i]["altitude"], 0)
             res.append(pd.Series([user, altitude_gained], index=["user_id", "altitude_gained"]))
         res = pd.DataFrame(res).sort_values(by=["altitude_gained"], ascending=False)
         res["altitude_gained"] = res['altitude_gained'] * feet_to_meter
         print()
         print(tabulate(res[:20], headers="keys", tablefmt="psql", showindex=False))
-        print(f"Took approximately {time() - start:.3f} seconds")        
+        print(f"Took approximately {time() - start:.3f} seconds.")        
             
 
     def question_9(self):
@@ -282,7 +278,7 @@ class Task2:
         res = []
         users = list(self.db_controller.get_distinct("user", "_id"))
         for j, user in enumerate(users):
-            print(f"Currently on user {j + 1}/{users.shape[0]}", end="\r")
+            print(f"Currently on user {j + 1}/{len(users)}", end="\r")
             activities = list(self.db_controller.aggregate("user", 
             [{
                 '$match': {
@@ -316,7 +312,7 @@ class Task2:
         res = pd.DataFrame(res).sort_values(by=["invalid_activities"], ascending=False)
         print()
         print(tabulate(res, headers="keys", tablefmt="psql", showindex=False))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
 
     def question_10(self):
         start = time()
@@ -363,9 +359,9 @@ class Task2:
         }])
         print("These users have been in the forbidden city:")
         pprint(list(res))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        print(f"Took approximately {time() - start:.3f} seconds.")
 
-    def question_11(self):
+    def question_11(self, boring=True):
         start = time()
         counts = self.db_controller.select_dataframe("user", 
         [{
@@ -404,22 +400,30 @@ class Task2:
                 'user_id': '$_id.user_id', 
                 'transportation_mode': '$_id.transportation_mode'
             }
+        }, {
+            '$sort': {
+                'user_id': 1
+            }
         }])
         
-        counts = counts.groupby(["user_id"]).apply(lambda row: row.loc[row["count"].idxmax()]).reset_index(drop="user_id")
-        print(tabulate(counts[["user_id", "transportation_mode", "count"]], headers="keys", tablefmt="psql", showindex=False))
-        print(f"Took approximately {time() - start:.3f} seconds")
+        def f(row):
+            _max = row.loc[row["count"] == row["count"].max()]
+            max_ = row.loc[row["count"].idxmax()]
+            return pd.Series([max_["user_id"], "/".join(_max["transportation_mode"].to_list()), max_["count"]], index=["user_id", "transportation_mode", "count"])
+            
+        counts = counts.groupby(["user_id"]).apply((lambda row: row.loc[row["count"].idxmax()][["user_id", "transportation_mode"]]) if boring else f).reset_index(drop="user_id")
+        print(tabulate(counts, headers="keys", tablefmt="psql", showindex=False))
+        print(f"Took approximately {time() - start:.3f} seconds.")
     
     
     
 def main():
     try:
         task = Task2()
-        task.question_11()
-        # for index, question in enumerate(task.questions):
-        #     print(f"\nQuestion {index + 1}")
-        #     question()
-        #     if index < len(task.questions) - 1: input("\nPress enter to recieve the next question:")
+        for index, question in enumerate(task.questions):
+            print(f"\nQuestion {index + 1}")
+            question()
+            if index < len(task.questions) - 1: input("\nPress enter to recieve the next question:")
     except:
         print("Something went wrong!")
         traceback.print_exc()

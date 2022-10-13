@@ -367,7 +367,47 @@ class Task2:
 
     def question_11(self):
         start = time()
-        pass
+        counts = self.db_controller.select_dataframe("user", 
+        [{
+            '$match': {
+                'has_labels': 1
+            }
+        }, {
+            '$lookup': {
+                'from': 'activity', 
+                'localField': 'activities', 
+                'foreignField': '_id', 
+                'as': 'activities'
+            }
+        }, {
+            '$unwind': '$activities'
+        }, {
+            '$match': {
+                'activities.transportation_mode': {
+                    '$ne': None
+                }
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    'user_id': '$_id', 
+                    'transportation_mode': '$activities.transportation_mode'
+                }, 
+                'count': {
+                    '$sum': 1
+                }
+            }
+        }, {
+            '$project': {
+                '_id': 0, 
+                'count': 1, 
+                'user_id': '$_id.user_id', 
+                'transportation_mode': '$_id.transportation_mode'
+            }
+        }])
+        
+        counts = counts.groupby(["user_id"]).apply(lambda row: row.loc[row["count"].idxmax()]).reset_index(drop="user_id")
+        print(tabulate(counts[["user_id", "transportation_mode", "count"]], headers="keys", tablefmt="psql", showindex=False))
         print(f"Took approximately {time() - start:.3f} seconds")
     
     
@@ -375,7 +415,7 @@ class Task2:
 def main():
     try:
         task = Task2()
-        task.question_10()
+        task.question_11()
         # for index, question in enumerate(task.questions):
         #     print(f"\nQuestion {index + 1}")
         #     question()

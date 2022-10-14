@@ -59,7 +59,7 @@ class Task1:
 def main():
     try:
         task = Task1()
-        task.load_data(save_to_file=True)
+        task.load_data()
         task.insert_data()
     except:
         print("Something went wrong!")

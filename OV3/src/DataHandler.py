@@ -116,12 +116,3 @@ class DataLoader:
         print(f"Loading track points...", end="\r")
         self.track_points = pd.DataFrame(self.track_points, columns=["activity_id", "lat", "lon", "altitude", "date_days", "date_time"])
         print(f"Loaded {self.track_points.shape[0]} track points!") 
-
-def main():
-    a = DataLoader()
-    a.load_data()
-    print(a.activities.dtypes)
-    print(a.track_points.dtypes)
-    
-if __name__ == "__main__":
-    main()

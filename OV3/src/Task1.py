@@ -21,6 +21,8 @@ class Task1:
         self.data.load_data(read_from_file=read_from_file, write_to_file=save_to_file)
     
     def insert_data(self):
+        """Inserts all the data into the database. Also prints the timing for each operation.
+        """
         print()
         print("Inserting users...", end="\r")
         start = time()
@@ -34,6 +36,16 @@ class Task1:
         print(f"Took approximately {time() - start:.3f} seconds.")  
         
     def _insert_users(self):
+        """Inserts the user data. Data shape: \n
+        {
+            _id: "id",
+            has_labels: 1 / 0,
+            activities: [
+                activity.id,\n
+                ...
+            ]
+        }
+        """
         self.db_controller.insert_many(
             "user", 
             list(self.data.users.apply(lambda row: 
@@ -44,6 +56,24 @@ class Task1:
                 }, axis=1).to_numpy()))
         
     def _insert_activities(self):
+        """Inserts the activities and their track points. Data shape:\n
+        {
+            _id: "activity_id",
+            transportation_mode: "activity.transportation_mode",
+            start_date_time: "activity.start_date_time", 
+            end_date_time: "activity.end_date_time",
+            track_points: [
+                {
+                    lat: "track_point.lat",
+                    lon: "track_point.lon",
+                    altitude: "track_point.altitude",
+                    date_days: "track_point.date_days",
+                    date_time: "track_point.date_time"
+                },\n
+                ...
+            ]
+        }
+        """
         self.db_controller.insert_many(
             "activity", 
             list(self.data.activities.apply(lambda row: 

@@ -4,9 +4,9 @@
 The dataset is located in the resources folder: [dataset](resources/dataset/)
 Otherwise I used the resources folder to store copies of the cleaned data as CSV files for faster reads when testing inserts.
 All code is in the [src](src/) folder:
-- [DbConnector.py](src/DbConnector.py) and [example.py](src/example.py) are leftovers from skeleton code. Left them in since they are nice to have for testing if the MongoDB db is running as it should.
+- [example.py](src/example.py) are leftover from skeleton code. Left it in since it is nice to have for testing if the MongoDB is running as it should.
 - [DataHandler.py](src/DataHandler.py): Reads the data and converts it into pandas dataframes after cleaning.
-- [DbController.py](src/DbController.py): Connects to the DB and handles all further queries. This includes creation of tables and insertion.
+- [DbController.py](src/DbController.py): Connects to the DB using [DbConnector.py](src/DbConnector.py) and handles all further queries. This includes creation of collections and insertion.
 - [Task1.py](src/Task1.py): The code for completing task 1. Mostly uses a combination of [DataHandler.py](src/DataHandler.py) and [DbController.py](src/DbController.py) to insert data into database.
 - [Task2.py](src/Task2.py): Runs the queries specified in Task2. Uses an instance of [DbController.py](src/DbController.py) to run the queries.
 
@@ -14,8 +14,8 @@ All code is in the [src](src/) folder:
 Have been tested on Windows 11 and Kali linux
 1. Install docker
 2. Open a terminal in the project root folder (TDT4225)
-3. Run `docker build -t mongodb .`
-4. Run `docker run -p 27017:27017 mongodb`
+3. Run `docker build -t mongodb .`. This creates the image.
+4. Run `docker run -p 27017:27017 mongodb`. This creates and runs a container using the image.
 5. After the terminal stops updating you can proceed to start running the application.
 
 ## Running the application
